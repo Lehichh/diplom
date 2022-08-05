@@ -1,0 +1,9 @@
+---
+- name: Installation wordpress
+  hosts: wp
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  roles:
+    - ansible-wp 
+

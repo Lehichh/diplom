@@ -1,0 +1,39 @@
+---
+
+- name: Update system
+  apt: update_cache=yes
+
+- name: Install git
+  apt:
+    name: git
+    state: present
+
+- name: Install gitlab runner
+  shell: |
+    curl -LJO https://gitlab-runner-downloads.s3.amazonaws.com/latest/deb/gitlab-runner_amd64.deb; \
+    dpkg -i gitlab-runner_amd64.deb
+  args:
+    creates: /usr/bin/gitlab-runner
+
+- name: Get token
+  command: gitlab-rails runner -e production "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token"
+  delegate_to: gitlab.sarkisyanweb.ru
+  register: runner_reg_token
+
+- name: Set Gitlab runner token
+  set_fact:
+    token: "{{ runner_reg_token.stdout }}"
+
+- debug: var=token
+
+- name: Register gitlab shell runner
+  command: |
+    gitlab-runner register \
+    --non-interactive \
+    --url "http://gitlab.sarkisyanweb.ru/" \
+    --registration-token "{{ token|quote }}" \
+    --executor "shell" \
+    --description "shell executor" \
+    --tag-list "shell" \
+    --run-untagged="true" \
+    --locked="false"

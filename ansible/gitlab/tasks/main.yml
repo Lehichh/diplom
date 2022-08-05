@@ -1,0 +1,50 @@
+---
+
+- name: Update system
+  apt: update_cache=yes
+
+- name: Install Gitlab dependencies
+  apt:
+    name: "{{ gitlab_dependencies }}"
+    state: present
+
+- name: Download Gitlab repo
+  get_url:
+    url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+    dest: /tmp/gitlab_install_repository.sh
+ 
+- name: Install GitLab repository.
+  command: bash /tmp/gitlab_install_repository.sh
+  register: output
+
+- name: Install Gitlab CE
+  apt:
+    name: gitlab-ce
+    state: present
+
+- name: change gitlab external url
+  lineinfile:
+    path: /etc/gitlab/gitlab.rb
+    regexp: "^external_url 'http://gitlab.example.com'"
+    line: external_url = 'https://gitlab.sarkisyanweb.ru'
+    state: present
+
+- name: Set password for root
+  lineinfile:
+    path: /etc/gitlab/gitlab.rb
+    regexp: "^# gitlab_rails['initial_root_password'] = 'password'"
+    line: gitlab_rails['initial_root_password'] = '162534+qaz'
+    state: present
+
+- name: Desable prometeus
+  lineinfile:
+    path: /etc/gitlab/gitlab.rb
+    regexp: "^# prometheus_monitoring['enable'] = true"
+    line: prometheus_monitoring['enable'] = false
+    state: present
+
+- name: Reconfigure GitLab
+  command: >
+    gitlab-ctl reconfigure
+    creates=/var/opt/gitlab/bootstrapped
+  failed_when: false

@@ -1,0 +1,86 @@
+---
+- name: Update system
+  apt: update_cache=yes
+
+- name: Installing Python lib
+  apt:
+    name: python3-mysqldb
+    state: present
+
+- name: Installing MySql-server
+  apt:
+    name: mysql-server
+    state: present
+
+- name: Reloading mysql
+  service:
+    name: mysql
+    state: restarted
+    enabled: true
+
+- name: creat user
+  mysql_user:
+    name: wordpress
+    host: '%'
+    password: "wordpress"
+    login_user: wordpress
+    login_password: "wordpress"
+    check_implicit_admin: yes
+    priv: '*.*:ALL,GRANT'
+    state: present
+
+- name: creat user
+  mysql_user:
+    name: mysql_monitor
+    password: mysql_monitor
+    priv: '*.*:SELECT,REPLICATION CLIENT,PROCESS'
+    state: present
+    
+- name: create user for replication
+  mysql_user:
+    name: repl
+    host: '%'
+    password: "password"
+    priv: "*.*:REPLICATION SLAVE"
+    state: present
+  when: ansible_hostname == "database-0"
+
+- name: Creating a new database
+  mysql_db: 
+    name: wordpress 
+    state: present 
+    login_user: wordpress 
+    login_password: "wordpress"
+
+- name: Copy config for Master
+  template:
+    src: templates/mysql_m.cnf
+    dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+  when: ansible_hostname == "database-0"
+
+- name: Reloading mysql
+  service:
+    name: mysql
+    state: restarted
+    enabled: true
+  
+  
+- name: Copy config for slave
+  template:
+    src: templates/mysql_s.cnf
+    dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+  when: ansible_hostname == "database-1"
+
+  #- name: Reloading mysql
+  #service:
+  #  name: mysql
+  #  state: restarted
+  #  enabled: true
+  #when: ansible_host == "192.168.3.201"
+
+  #- name: replication "show  master status;"
+  #community.mysql.mysql_replication:
+  #  mode: getprimary
+    #login_unix_socket: /var/run/mysqld/mysqld.sock
+    # register: master
+    #when: ansible_hostname == "database-0"

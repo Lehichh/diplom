@@ -1,0 +1,23 @@
+[mysqld]
+
+user            = mysql
+
+bind-address            = 192.168.15.200
+mysqlx-bind-address     = 127.0.0.1
+server-id = 1
+
+myisam-recover-options  = BACKUP
+
+max_allowed_packet          = 16M
+key_buffer_size             = 16M
+
+log_error = /var/log/mysql/error.log
+
+log_bin   = /var/log/mysql/mysql-bin.log
+
+binlog_do_db          = wordpress
+
+max_binlog_size   = 100M
+expire_logs_days = 2
+
+

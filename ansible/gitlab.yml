@@ -1,0 +1,16 @@
+---
+- name: Install gitlab
+  hosts: gitlab.sarkisyanweb.ru 
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  roles:
+    - gitlab
+     
+- name: Install runner
+  hosts: runner.sarkisyanweb.ru
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  roles:
+    - gitlab_runner

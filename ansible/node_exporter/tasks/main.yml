@@ -1,0 +1,84 @@
+---
+
+- name: download node exporter
+  get_url:
+    url: https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-amd64.tar.gz
+    dest: /tmp
+
+- name: unarchive node exporter
+  unarchive:
+    remote_src: yes
+    src: /tmp/node_exporter-1.3.1.linux-amd64.tar.gz
+    dest: /tmp
+
+- name: move node exporter to /usr/local/bin
+  copy:
+    src: /tmp/node_exporter-1.3.1.linux-amd64/node_exporter
+    dest: /usr/local/bin/node_exporter
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- name: install unit file to systemd
+  template:
+    src: templates/node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: 0600
+
+- name: configure systemd to use service
+  systemd:
+    daemon_reload: yes
+    enabled: yes
+    state: started
+    name: node_exporter.service
+
+- block:
+
+    - name: download mysql exporter
+      get_url:
+        url: https://github.com/prometheus/mysqld_exporter/releases/download/v0.14.0/mysqld_exporter-0.14.0.linux-amd64.tar.gz
+        dest: /tmp
+
+    - name: unarchive mysql exporter
+      unarchive:
+        remote_src: yes
+        src: /tmp/mysqld_exporter-0.14.0.linux-amd64.tar.gz
+        dest: /tmp
+
+    - name: move mysql exporter to /usr/local/bin
+      copy:
+        src: /tmp/mysqld_exporter-0.14.0.linux-amd64/mysqld_exporter
+        dest: /usr/local/bin/mysqld_exporter
+        remote_src: yes
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Copy config file
+      template:
+        src: templates/my.cnf.j2
+        dest: /usr/local/etc/.my.cnf
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: copy systemd
+      template:
+        src: templates/mysqld_exporter.service.j2
+        dest: /etc/systemd/system/mysqld_exporter.service
+        owner: root
+        group: root
+        mode: 0600
+
+
+    - name: configure systemd for mysql exporter
+      systemd:
+        daemon_reload: yes
+        enabled: yes
+        state: started
+        name: mysqld_exporter.service
+  when:  ansible_hostname == "database-0"
+

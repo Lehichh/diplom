@@ -1,0 +1,7 @@
+---
+php_modules: [ 'php-curl', 'php-mysql', 'php-gd', 'php-mbstring', 'php-xml', 'php-xmlrpc', 'php-soap', 'php-intl', 'php-zip' ]
+
+##HTTP Settings
+http_host: "sarkisyanweb.ru"
+http_conf: "sarkisyanweb.ru.conf"
+http_port: "80"

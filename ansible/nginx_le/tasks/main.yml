@@ -1,0 +1,56 @@
+---
+- name: Updating remote system
+  apt:
+    update_cache: yes
+
+- name: Install Nginx
+  become: true
+  apt:
+    name:
+      - nginx
+    state: latest
+
+- name: install letsencrypt
+  apt: name=letsencrypt state=latest
+
+- name: Create derictory for cert
+  file:
+    name: /var/www/letsencrypt
+    state: directory
+
+- name: removing default site config
+  file:
+    name: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Install nginx config
+  template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+
+- name: installing http
+  template:
+    src: templates/http.j2
+    dest: /etc/nginx/sites-enabled/http
+
+- name: Reload nginx
+  service: name=nginx state=restarted
+
+- name: Create certificate
+  shell: letsencrypt certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain_name }} -d www.{{ domain_name }} -d grafana.{{ domain_name }} -d prometheus.{{ domain_name }} -d alertmanager.{{ domain_name }} -d gitlab.{{ domain_name }}
+  args:
+    creates: /etc/letsencrypt/live/{{ domain_name }}
+
+
+- name: Generate dhparams
+  shell: openssl dhparam -out /etc/nginx/dhparams.pem 2048
+  args:
+    creates: /etc/nginx/dhparams.pem
+
+- name: Install https
+  template:
+    src: templates/https.j2
+    dest: /etc/nginx/sites-enabled/https
+
+- name: Reload nginx
+  service: name=nginx state=restarted

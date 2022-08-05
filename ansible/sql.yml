@@ -1,0 +1,16 @@
+---
+- name: Installation Mysql claster 
+  hosts: db
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  roles:
+    - mysql_role
+
+- name: Replica
+  hosts: database-1
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  roles:
+    - mysql_repl 
